@@ -1,0 +1,12 @@
+# Entorno virtual
+env_kinelaid/
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# Base de datos local
+db.sqlite3
+
+# Archivos de configuración de VSCode
+.vscode/
