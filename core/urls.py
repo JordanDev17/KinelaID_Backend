@@ -9,5 +9,6 @@ urlpatterns = [
     path('api/access/', include('access_control.urls')),
     path('api/audit/', include('audit_log.urls')),
     path('api/auth-interfaz/', include('interface_auth.urls')),
+    path('api/cameras/', include('camera_hub.urls')),
     
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

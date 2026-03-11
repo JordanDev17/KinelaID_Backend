@@ -6,9 +6,14 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny
+import csv
+from django.http import HttpResponse
+from django.utils import timezone
 
-from .models import Area, RegistroAcceso
-from .serializers import AreaSerializer, RegistroAccesoSerializer
+
+
+from .models import Area, RegistroAcceso, PermisoArea
+from .serializers import AreaSerializer, RegistroAccesoSerializer, PermisoAreaSerializer
 
 class AreaViewSet(viewsets.ModelViewSet):
     queryset = Area.objects.all()
@@ -27,7 +32,6 @@ class RegistroAccesoViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def estadisticas(self, request):
-        """Endpoint pulido para el Dashboard del Frontend"""
         total = self.get_queryset().count()
         exitosos = self.get_queryset().filter(permitido=True).count()
         fallidos = total - exitosos
@@ -46,18 +50,49 @@ class RegistroAccesoViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def exportar_csv(self, request):
         queryset = self.filter_queryset(self.get_queryset())
+
+        # Hora actual en Colombia
+        ahora = timezone.localtime(timezone.now())
+        timestamp = ahora.strftime("%Y%m%d_%H%M%S")
+
+        nombre_archivo = f"auditoria_kinelaid_{timestamp}.csv"
+
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="auditoria_kinelaid.csv"'
-        
+        response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+
         writer = csv.writer(response)
         writer.writerow(['Fecha', 'Usuario', 'Área', 'Resultado', 'Motivo'])
 
         for log in queryset:
+            fecha_local = timezone.localtime(log.fecha_hora)
+
             writer.writerow([
-                log.fecha_hora.strftime("%Y-%m-%d %H:%M"),
+                fecha_local.strftime("%Y-%m-%d %H:%M:%S"),
                 log.usuario.nombre_completo if log.usuario else "DESCONOCIDO",
                 log.area.nombre,
                 "PERMITIDO" if log.permitido else "DENEGADO",
                 log.motivo_denegacion or "N/A"
             ])
+
         return response
+    
+class PermisoAreaViewSet(viewsets.ModelViewSet):
+    """
+    CRUD de permisos por zona.
+    
+    Uso desde Angular:
+      GET  /api/audit/permisosarea/?area=1   → permisos de la zona 1
+      POST /api/audit/permisosarea/          → crear permiso (si no existe)
+      PATCH /api/audit/permisosarea/3/       → actualizar puede_acceder
+    
+    El unique_together ('rol', 'area') garantiza que no haya
+    entradas duplicadas. Si el frontend intenta crear uno que ya
+    existe, Django retorna 400 con el mensaje del constraint.
+    Angular lo maneja: si permiso_id > 0 usa PATCH, sino POST.
+    """
+    queryset             = PermisoArea.objects.select_related('rol', 'area').all()
+    serializer_class     = PermisoAreaSerializer
+    permission_classes   = [AllowAny]
+    filter_backends      = [DjangoFilterBackend]
+    filterset_fields     = ['area', 'rol', 'puede_acceder']
+    

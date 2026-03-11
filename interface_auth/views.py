@@ -4,10 +4,15 @@ import base64
 from django.core.files.base import ContentFile
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, viewsets
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
+
+
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.hashers import check_password
 from .models import InterfazUsuario
-from .serializers import InterfazUsuarioSerializer
+from .serializers import InterfazUsuarioSerializer,InterfazUsuarioListSerializer, InterfazUsuarioWriteSerializer
 import logging
 logger = logging.getLogger(__name__)
 
@@ -182,3 +187,44 @@ class LoginStepTwoFaceView(APIView):
             
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+        
+class InterfazUsuarioViewSet(viewsets.ModelViewSet):
+    """
+    CRUD de cuentas de acceso al panel de administración.
+    
+    GET  /api/auth-interfaz/usuarios/     → lista (sin contraseña)
+    POST /api/auth-interfaz/usuarios/     → crear cuenta + hashear contraseña
+    PUT  /api/auth-interfaz/usuarios/{id}/ → actualizar (contraseña opcional)
+    PATCH /api/auth-interfaz/usuarios/{id}/ → actualizar parcial (ej: is_active)
+    DELETE /api/auth-interfaz/usuarios/{id}/ → eliminar
+    """
+    queryset           = InterfazUsuario.objects.select_related('perfil', 'perfil__rol').all()
+    permission_classes = [AllowAny]
+
+    def get_serializer_class(self):
+        # En lectura: serializer seguro sin contraseña
+        # En escritura: serializer que acepta password
+        if self.action in ('list', 'retrieve'):
+            return InterfazUsuarioListSerializer
+        return InterfazUsuarioWriteSerializer
+
+    def perform_create(self, serializer):
+        # Hashear contraseña antes de guardar
+        password = self.request.data.get('password', '')
+        serializer.save(password=make_password(password) if password else '')
+
+    def update(self, request, *args, **kwargs):
+        kwargs['partial'] = True  # Siempre parcial para no romper si no viene password
+        instance = self.get_object()
+        data     = request.data.copy()
+
+        if 'password' in data and data['password']:
+            data['password'] = make_password(data['password'])
+        elif 'password' in data:
+            # Si viene vacío, ignorar y mantener la contraseña actual
+            del data['password']
+
+        serializer = self.get_serializer(instance, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
