@@ -1,30 +1,41 @@
 from rest_framework import serializers
 from .models import Usuario, Rol
 
+
+# =====================================================
+# SERIALIZER ROL
+# =====================================================
 class RolSerializer(serializers.ModelSerializer):
+
     class Meta:
-        model  = Rol
+        model = Rol
         fields = ['rol_id', 'nombre', 'descripcion']
 
 
+# =====================================================
+# SERIALIZER USUARIO
+# =====================================================
 class UsuarioSerializer(serializers.ModelSerializer):
-    """
-    Serializer para el modelo Usuario real.
-    IMPORTANTE: NO hay campo 'cargo' ni 'username' en Usuario.
-    Campos: usuario_id, nombre_completo, identificacion,
-            email, activo, rol(FK), face_embedding, fecha_creacion
-    """
-    # Expone el objeto rol completo (no solo el ID)
+
+    # Devuelve detalles completos del rol
     rol_detalle = RolSerializer(source='rol', read_only=True)
 
     class Meta:
-        model  = Usuario
+        model = Usuario
+
         fields = [
-            'usuario_id', 'nombre_completo', 'identificacion',
-            'email', 'activo', 'rol', 'rol_detalle',
-            'face_embedding', 'fecha_creacion'
+            'usuario_id',
+            'nombre_completo',
+            'identificacion',
+            'email',
+            'activo',
+            'rol',
+            'rol_detalle',
+            'face_embedding',
+            'fecha_creacion'
         ]
-        # face_embedding no se escribe desde fuera (se genera en el servidor)
+
+        # Embedding NO puede escribirse desde el cliente
         extra_kwargs = {
-            'face_embedding': {'read_only': True},
+            'face_embedding': {'read_only': True}
         }
