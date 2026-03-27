@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-yov%*@i8$$g8*r#qzwa$s+_*%l6ny9k8s1ov&w6ii(q)aw^d89
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'zahra-gratifiable-tediously.ngrok-free.dev']
 
 
 # Application definition
@@ -62,11 +62,17 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:4200",
+    "http://127.0.0.1:4200",
+    "https://kinelaid-frontend.vercel.app",
 ]
+
+# Si necesitas ser menos restrictivo durante las pruebas del SENA:
+CORS_ALLOW_ALL_ORIGINS = True
 
 CORS_ALLOW_HEADERS = [
     "content-type",
     "authorization",
+    "ngrok-skip-browser-warning" 
 ]
 
 ROOT_URLCONF = 'core.urls'

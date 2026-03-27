@@ -1,18 +1,27 @@
 from django.urls import path
-from .views import VideoStreamView, CamaraListCreateView, CamaraDetailView, detectar_camaras_fisicas, capture_frame
+from .views import (
+    video_stream_view,
+    CamaraListCreateView,
+    CamaraDetailView,
+    detectar_camaras_fisicas,
+    capture_frame,
+    reset_camera_service,
+    camera_status,
+)
 
 urlpatterns = [
-    # Ruta para obtener la lista de cámaras (GET) y crear nuevas (POST)
+    # CRUD
     path('', CamaraListCreateView.as_view(), name='camara-list'),
-    path('capture/<int:hw_idx>/', capture_frame),
-    # Ruta para ver/editar/borrar una cámara específica
     path('<int:pk>/', CamaraDetailView.as_view(), name='camara-detail'),
-    
-    # EL ENDPOINT CRÍTICO: Aquí es donde Angular y Monitor.py verán el video
-    # Ejemplo: http://127.0.0.1:8000/api/cameras/stream/0/
-    path('stream/<int:cam_idx>/', VideoStreamView.as_view(), name='video-stream'),
-    
+
+    # Hardware
     path('detectar/', detectar_camaras_fisicas, name='detectar'),
-    
-    
+
+    # Gestión del servicio
+    path('reset-service/', reset_camera_service, name='reset-service'),
+    path('status/', camera_status, name='camera-status'),  # ← nuevo
+
+    # Streaming y captura
+    path('stream/<int:cam_idx>/', video_stream_view, name='video_stream'),
+    path('capture/<int:hw_idx>/', capture_frame, name='capture_frame'),
 ]
