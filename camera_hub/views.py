@@ -155,7 +155,7 @@ def gen_shared_frames(hw_idx: int):
 @csrf_exempt
 @xframe_options_exempt
 def video_stream_view(request, cam_idx: int):
-    idx = int(cam_idx)
+    idx = int(cam_idx)  
     response = StreamingHttpResponse(
         gen_shared_frames(idx),
         content_type="multipart/x-mixed-replace; boundary=frame",

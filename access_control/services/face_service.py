@@ -6,8 +6,8 @@ from users_hub.models import Usuario
 logger = logging.getLogger(__name__)
 
 class FaceService:
-    UMBRAL_ACCESO   = 0.45  # Estricto — para acceso en vivo
-    UMBRAL_REGISTRO = 0.60  # Más amplio — para detectar duplicados al registrar
+    UMBRAL_ACCESO   = 0.50  # Estricto — para acceso en vivo
+    UMBRAL_REGISTRO = 0.72  # Más amplio — para detectar duplicados al registrar
 
     @staticmethod
     def detectar_y_codificar(image):

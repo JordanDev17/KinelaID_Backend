@@ -2,6 +2,9 @@
 env_kinelaid/
 venv/
 env/
+env_monitor/
+venv/
+env/
 __pycache__/
 *.py[cod]
 
